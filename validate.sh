@@ -3,7 +3,7 @@
 set -u
 
 usage() {
-    printf 'Usage: %s NUMBER.txt\n' "${0##*/}" >&2
+    printf 'Usage: %s NUMBER_WORD.txt\n' "${0##*/}" >&2
 }
 
 if (( $# != 1 )); then
@@ -14,12 +14,13 @@ fi
 input=$1
 filename=${input##*/}
 
-if [[ ! $filename =~ ^([0-9]+)\.txt$ ]]; then
-    printf 'Error: the input filename must be a number followed by .txt.\n' >&2
+if [[ ! $filename =~ ^([0-9]+)_([a-z]+)\.txt$ ]]; then
+    printf 'Error: the input filename must have the form NUMBER_WORD.txt.\n' >&2
     exit 2
 fi
 
 number=$((10#${BASH_REMATCH[1]}))
+word=${BASH_REMATCH[2]}
 if (( number < 2 )); then
     printf 'Error: the number must be at least 2.\n' >&2
     exit 2
@@ -47,6 +48,12 @@ fi
 
 limit=$((number - 1))
 target=$(sed -n "${number}p" "$word_file")
+
+if [[ $word != "$target" ]]; then
+    printf 'Error: filename says word %d is %s, but the word list says it is %s.\n' \
+        "$number" "$word" "$target" >&2
+    exit 2
+fi
 
 LC_ALL=C awk -v limit="$limit" -v target="$target" '
     NR == FNR {
