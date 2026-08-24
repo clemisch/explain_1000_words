@@ -21,8 +21,8 @@ fi
 
 number=$((10#${BASH_REMATCH[1]}))
 word=${BASH_REMATCH[2]}
-if (( number < 2 )); then
-    printf 'Error: the number must be at least 2.\n' >&2
+if (( number < 1 )); then
+    printf 'Error: the number must be at least 1.\n' >&2
     exit 2
 fi
 
@@ -40,18 +40,19 @@ if [[ ! -r $word_file ]]; then
 fi
 
 word_count=$(awk 'END { print NR }' "$word_file")
-if (( number > word_count )); then
+target_position=$((number + 1))
+if (( target_position > word_count )); then
     printf 'Error: %s contains only %d words; position %d does not exist.\n' \
-        "$word_file" "$word_count" "$number" >&2
+        "$word_file" "$word_count" "$target_position" >&2
     exit 2
 fi
 
-limit=$((number - 1))
-target=$(sed -n "${number}p" "$word_file")
+limit=$number
+target=$(sed -n "${target_position}p" "$word_file")
 
 if [[ $word != "$target" ]]; then
     printf 'Error: filename says word %d is %s, but the word list says it is %s.\n' \
-        "$number" "$word" "$target" >&2
+        "$target_position" "$word" "$target" >&2
     exit 2
 fi
 
