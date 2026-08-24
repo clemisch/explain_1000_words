@@ -64,6 +64,15 @@ LC_ALL=C awk -v limit="$limit" -v target="$target" '
     }
 
     {
+        for (column = 1; column <= length($0); column++) {
+            character = substr($0, column, 1)
+            if (character !~ /^[A-Za-z .,;:!?-]$/ && character != "\t") {
+                printf "Disallowed character on line %d, column %d: %s\n", \
+                    FNR, column, character > "/dev/stderr"
+                bad_characters++
+            }
+        }
+
         text = tolower($0)
         gsub(/[^a-z]+/, " ", text)
         count = split(text, words, / +/)
@@ -77,9 +86,16 @@ LC_ALL=C awk -v limit="$limit" -v target="$target" '
     }
 
     END {
-        if (bad) {
-            printf "FAIL: %d disallowed word occurrence%s found.\n", \
-                bad, (bad == 1 ? "" : "s") > "/dev/stderr"
+        if (bad || bad_characters) {
+            if (bad) {
+                printf "%d disallowed word occurrence%s found.\n", \
+                    bad, (bad == 1 ? "" : "s") > "/dev/stderr"
+            }
+            if (bad_characters) {
+                printf "%d disallowed character occurrence%s found.\n", \
+                    bad_characters, (bad_characters == 1 ? "" : "s") > "/dev/stderr"
+            }
+            printf "FAIL\n" > "/dev/stderr"
             exit 1
         }
 
